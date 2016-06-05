@@ -6,12 +6,22 @@ string  PLUGIN_CHAT_CMD             = "af";
 string  PLUGIN_CHAT_CMD_ALT         = "autofolder";
 integer IN_DEBUG_MODE               = TRUE;
 string  g_sCard                     = ".autofolder";
+
+// TODO: since this won't work without RLV, we'll have to track RLV on/off, I guess!
 //integer g_iRLVOn = FALSE; //Assume RLV is off until we hear otherwise
 
 list g_lMenuIDs;//3-strided list of avkey, dialogid, menuname
 integer g_iMenuStride = 3;
 
-list PLUGIN_BUTTONS = ["SAVE", "PRINT", "REMOVE"];
+string sPreviousRegion;
+integer iPreviousEstateId;
+
+list lRegionFolders; // 2-strided list of name and RLV folder.  Name could appear multiple times.
+integer iRegionFolderStride = 2;
+list lEstateFolders; // 2-strided list of estate if and RLV folder.  Estate id coule appear multiple times.
+integer iEstateFolderStride = 2;
+
+list PLUGIN_BUTTONS = ["Sim+", "Estate+", "Sim-", "Estate-", "Print"];
 string UPMENU = "BACK";
 
 integer CMD_OWNER                   = 500;
@@ -31,6 +41,13 @@ integer MENUNAME_REMOVE            = 3003;
 integer DIALOG                     = -9000;
 integer DIALOG_RESPONSE            = -9001;
 integer DIALOG_TIMEOUT             = -9002;
+
+
+init() {
+    // add some test data
+    lRegionFolders = ["Boulevard", "slink", "Thistle", "shx"];
+    lEstateFolders = ["1", "shx"];
+}
 
 Debug(string sStr) {
     if (!IN_DEBUG_MODE) {
@@ -70,7 +87,36 @@ UserCommand(integer iNum, string sStr, key kID) {
     }
 }
 
+HandleRegionChange() {
+    string sRegionName = llGetRegionName();
+    integer iEstateId = (integer) llGetEnv("estate_id");
+
+    // sanity check that we actually went somewhere
+    if (sRegionName != sPreviousRegion) {
+        Debug("previous region: "+sPreviousRegion+" previous estate: "+(string)iPreviousEstateId);
+        Debug("new region: "+sRegionName+" new estate: "+(string)iEstateId);
+
+        // get the list of RLV folders for the region we have departed.
+
+        // get the list of RLV folders for the new region
+
+        sPreviousRegion = sRegionName;
+        iPreviousEstateId = iEstateId;
+    } else {
+        Debug("it seems we got a changed event but didn't move.  ignoring.");
+    }
+}
+
 default {
+    state_entry() {
+        init();
+    }
+
+    on_rez(integer start_param){
+        state default;
+    }
+
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
     Debug((string)iSender + "|" + (string)iNum + "|" + sStr + "|" + (string)kID);
     if(iNum == MENUNAME_REQUEST && sStr == g_sParentMenu) {
@@ -106,4 +152,13 @@ default {
         llResetScript();
     }
   }
+
+  changed(integer iChange) {
+//        if(iChange & CHANGED_INVENTORY) ReadDestinations();
+        if(iChange & CHANGED_OWNER)  llResetScript();
+        if (iChange & CHANGED_REGION) {
+            Debug("region changed");
+            HandleRegionChange();
+        }
+    }
 }
