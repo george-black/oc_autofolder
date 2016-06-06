@@ -91,19 +91,48 @@ HandleRegionChange() {
     string sRegionName = llGetRegionName();
     integer iEstateId = (integer) llGetEnv("estate_id");
 
+    list lFoldersToRemove = [];
+    list lFoldersToAdd = [];
+
     // sanity check that we actually went somewhere
     if (sRegionName != sPreviousRegion) {
-        Debug("previous region: "+sPreviousRegion+" previous estate: "+(string)iPreviousEstateId);
-        Debug("new region: "+sRegionName+" new estate: "+(string)iEstateId);
-
+        Debug("previous region: "+sPreviousRegion+"  "+"new region: "+sRegionName);
         // get the list of RLV folders for the region we have departed.
-
-        // get the list of RLV folders for the new region
-
+        integer i;
+        for (i = 0; i < llGetListLength(lRegionFolders); i+=iRegionFolderStride) {
+            string sListItem = llList2String(lRegionFolders,i);
+            if (sListItem == sPreviousRegion) {
+                string sListFolder = llList2String(lRegionFolders,i+1); // strided list, 2nd position
+                lFoldersToRemove += [ sListFolder ];
+            }
+            if (sListItem == sRegionName) {
+                string sListFolder = llList2String(lRegionFolders,i+1); // strided list, 2nd position
+                lFoldersToAdd += [ sListFolder ];
+            }
+        }
         sPreviousRegion = sRegionName;
+
+    }
+    if (iEstateId != iPreviousEstateId) {
+        Debug("previous estate: "+(string)iPreviousEstateId+"  new estate: "+(string)iEstateId);
+        integer i;
+        for (i = 0; i < llGetListLength(lEstateFolders); i+=iEstateFolderStride) {
+            string sListItem = llList2String(lEstateFolders,i);
+            if (sListItem == sPreviousRegion) {
+                string sListFolder = llList2String(lEstateFolders,i+1); // strided list, 2nd position
+                lFoldersToRemove += [ sListFolder ];
+            }
+            if (sListItem == sRegionName) {
+                string sListFolder = llList2String(lEstateFolders,i+1); // strided list, 2nd position
+                lFoldersToAdd += [ sListFolder ];
+            }
+        }
         iPreviousEstateId = iEstateId;
-    } else {
-        Debug("it seems we got a changed event but didn't move.  ignoring.");
+    }
+
+    if (llGetListLength(lFoldersToAdd) >0 || llGetListLength(lFoldersToRemove) > 0) {
+        Debug("would add folders: "+(string)lFoldersToAdd);
+        Debug("would remove folders: "+(string)lFoldersToRemove);
     }
 }
 
