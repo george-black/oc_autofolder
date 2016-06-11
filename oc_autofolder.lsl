@@ -45,7 +45,7 @@ integer DIALOG_TIMEOUT             = -9002;
 
 init() {
     // add some test data
-    lRegionFolders = ["Boulevard", "slink", "Thistle", "shx"];
+    lRegionFolders = ["Boulevard", "gag", "Thistle", "slink", "Alki", "shx"];
     lEstateFolders = ["1", "shx"];
 }
 
@@ -85,6 +85,16 @@ UserCommand(integer iNum, string sStr, key kID) {
         // an authorized user requested the plugin menu by typing the menus chat command
         DoMenu(kID, iNum);
     }
+}
+
+AddFolder(string folderName) {
+    Debug("adding folder: "+folderName);
+    llMessageLinked(LINK_ROOT, CMD_WEARER, "+"+folderName, llGetOwner());
+}
+
+RemoveFolder(string folderName) {
+    Debug("removing folder: "+folderName);
+    llMessageLinked(LINK_ROOT, CMD_WEARER, "-"+folderName, llGetOwner());
 }
 
 HandleRegionChange() {
@@ -131,8 +141,13 @@ HandleRegionChange() {
     }
 
     if (llGetListLength(lFoldersToAdd) >0 || llGetListLength(lFoldersToRemove) > 0) {
-        Debug("would add folders: "+(string)lFoldersToAdd);
-        Debug("would remove folders: "+(string)lFoldersToRemove);
+        integer i;
+        for (i = 0; i < llGetListLength(lFoldersToRemove); i++) {
+            RemoveFolder(llList2String(lFoldersToRemove, i));
+        }
+        for (i = 0; i < llGetListLength(lFoldersToAdd); i++) {
+            AddFolder(llList2String(lFoldersToAdd, i));
+        }
     }
 }
 
