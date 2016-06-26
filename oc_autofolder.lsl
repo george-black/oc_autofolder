@@ -4,7 +4,7 @@ string  g_sSubMenu              = "AutoFolder";
 string  g_sParentMenu          = "Apps";
 string  PLUGIN_CHAT_CMD             = "af";
 string  PLUGIN_CHAT_CMD_ALT         = "autofolder";
-integer IN_DEBUG_MODE               = TRUE;
+integer IN_DEBUG_MODE               = FALSE;
 string  g_sCard                     = ".autofolder";
 
 // TODO: since this won't work without RLV, we'll have to track RLV on/off, I guess!
@@ -157,7 +157,8 @@ default {
     }
 
     on_rez(integer start_param){
-        state default;
+        // user has just logged in, maybe somewhere new
+        HandleRegionChange();
     }
 
 
