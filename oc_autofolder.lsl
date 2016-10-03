@@ -142,6 +142,7 @@ HandleRegionChange() {
 
     if (llGetListLength(lFoldersToAdd) >0 || llGetListLength(lFoldersToRemove) > 0) {
         integer i;
+        llSleep(1.0);
         for (i = 0; i < llGetListLength(lFoldersToRemove); i++) {
             RemoveFolder(llList2String(lFoldersToRemove, i));
         }
