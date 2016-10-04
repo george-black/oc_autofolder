@@ -4,7 +4,7 @@ string  g_sSubMenu              = "AutoFolder";
 string  g_sParentMenu          = "Apps";
 string  PLUGIN_CHAT_CMD             = "af";
 string  PLUGIN_CHAT_CMD_ALT         = "autofolder";
-integer IN_DEBUG_MODE               = FALSE;
+integer IN_DEBUG_MODE               = TRUE;
 string  g_sCard                     = ".autofolder";
 
 // TODO: since this won't work without RLV, we'll have to track RLV on/off, I guess!
@@ -90,11 +90,13 @@ UserCommand(integer iNum, string sStr, key kID) {
 AddFolder(string folderName) {
     Debug("adding folder: "+folderName);
     llMessageLinked(LINK_ROOT, CMD_WEARER, "+"+folderName, llGetOwner());
+    llSleep(0.2);
 }
 
 RemoveFolder(string folderName) {
     Debug("removing folder: "+folderName);
     llMessageLinked(LINK_ROOT, CMD_WEARER, "-"+folderName, llGetOwner());
+    llSleep(0.2);
 }
 
 HandleRegionChange() {
@@ -164,46 +166,49 @@ default {
 
 
     link_message(integer iSender, integer iNum, string sStr, key kID) {
-    Debug((string)iSender + "|" + (string)iNum + "|" + sStr + "|" + (string)kID);
-    if(iNum == MENUNAME_REQUEST && sStr == g_sParentMenu) {
-        llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
-    } else if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) {
-      UserCommand(iNum, sStr, kID);
-    } else if(iNum == DIALOG_RESPONSE) {
-      integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-      if (iMenuIndex != -1) {
-        list lMenuParams = llParseStringKeepNulls(sStr, ["|"], []);
-        key kAv = (key)llList2String(lMenuParams, 0); // avatar using the menu
-        string sMessage = llList2String(lMenuParams, 1); // button label
-        integer iPage = (integer)llList2String(lMenuParams, 2); // menu page
-        integer iAuth = (integer)llList2String(lMenuParams, 3); // auth level of avatar
-        list lParams =  llParseStringKeepNulls(sStr, ["|"], []);
-        string sMenuType = llList2String(g_lMenuIDs, iMenuIndex + 1);
-        g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
-        if(sMessage == UPMENU) {
-            llMessageLinked(LINK_ROOT, iAuth, "menu " + g_sParentMenu, kAv);
+        //Debug((string)iSender + "|" + (string)iNum + "|" + sStr + "|" + (string)kID);
+        if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu) {
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
+        } else if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) {
+            UserCommand(iNum, sStr, kID);
+        } else if (iNum == DIALOG_RESPONSE) {
+            integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
+            if (iMenuIndex != -1) {
+                list lMenuParams = llParseStringKeepNulls(sStr, ["|"], []);
+                key kAv = (key)llList2String(lMenuParams, 0); // avatar using the menu
+                string sMessage = llList2String(lMenuParams, 1); // button label
+                integer iPage = (integer)llList2String(lMenuParams, 2); // menu page
+                integer iAuth = (integer)llList2String(lMenuParams, 3); // auth level of avatar
+                list lParams =  llParseStringKeepNulls(sStr, ["|"], []);
+                string sMenuType = llList2String(g_lMenuIDs, iMenuIndex + 1);
+                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+                if(sMessage == UPMENU) {
+                    llMessageLinked(LINK_ROOT, iAuth, "menu " + g_sParentMenu, kAv);
+                }
+            }
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") {
+                LINK_DIALOG = iSender;
+            }
+            else if (sStr == "LINK_SAVE")  {
+                LINK_SAVE = iSender;
+            }
+        } else if (iNum == DIALOG_TIMEOUT) {
+            integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
+        } else if (iNum == REBOOT && sStr == "reboot") {
+            llResetScript();
         }
-      }
-    } else if (iNum == LINK_UPDATE) {
-        if (sStr == "LINK_DIALOG") {
-            LINK_DIALOG = iSender;
-        }
-        else if (sStr == "LINK_SAVE")  {
-            LINK_SAVE = iSender;
-        }
-    } else if (iNum == DIALOG_TIMEOUT) {
-        integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-        g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
-    } else if (iNum == REBOOT && sStr == "reboot") {
-        llResetScript();
     }
-  }
 
   changed(integer iChange) {
 //        if(iChange & CHANGED_INVENTORY) ReadDestinations();
-        if(iChange & CHANGED_OWNER)  llResetScript();
+        if(iChange & CHANGED_OWNER) {
+            llResetScript();
+        }
         if (iChange & CHANGED_REGION) {
             Debug("region changed");
+            llOwnerSay("autofolder: region changed");
             HandleRegionChange();
         }
     }
